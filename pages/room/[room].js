@@ -111,8 +111,8 @@ export default function Room() {
     return () => {
       console.log("unmount");
       if (socket?.current?.readyState !== WebSocket.OPEN) {
-        socket?.current?.close();
-        socket?.current?.removeEventListener("message", onMessage);
+        // socket?.current?.close();
+        // socket?.current?.removeEventListener("message", onMessage);
       }
     };
   }, [user, sendMessage, room, isReady]);
