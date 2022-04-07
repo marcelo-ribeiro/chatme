@@ -44,84 +44,66 @@ export default function Room() {
     if (!user) return;
     const controller = new AbortController();
     (async () => {
-      console.log("Fetching");
       try {
         await fetch("/api/socket", {
           method: "POST",
           body: JSON.stringify(user),
           signal: controller.signal,
         });
-        console.log("Fetched");
         setIsReady(true);
       } catch (error) {
         console.log({ error });
       }
     })();
     return () => {
-      console.log("unmount");
       controller?.abort();
     };
   }, [user]);
 
   const sendMessage = useCallback((message, user) => {
-    socket?.current?.send(
-      JSON.stringify({
-        id: uuid(),
-        created: new Date(),
-        user,
-        message,
-      })
-    );
+    const messageData = {
+      id: uuid(),
+      created: new Date(),
+      user,
+      message,
+    };
+    socket.current?.send(JSON.stringify(messageData));
     setMessage("");
   }, []);
 
   useEffect(() => {
-    console.count("useEffect");
-
     if (!!isReady && !socket.current) {
-      console.log("socket.current is null");
       socket.current = new WebSocket(`wss://${location.host}`, room);
-      console.log({ socket: socket.current });
 
-      socket?.current?.addEventListener("message", onMessage);
-      socket?.current?.addEventListener(
+      socket.current?.addEventListener("message", onMessage);
+      socket.current?.addEventListener(
         "open",
         () => sendMessage("Usuário conectado", user),
         { once: true }
       );
-      // socket?.current?.addEventListener(
-      //   "open",
-      //   (open) => console.log({ open }),
-      //   {
-      //     once: true,
-      //   }
-      // );
-      // socket?.current?.addEventListener(
-      //   "close",
-      //   (close) => console.log({ close }),
-      //   { once: true }
-      // );
-      // socket?.current?.addEventListener(
-      //   "error",
-      //   (error) => console.log({ error }),
-      //   { once: true }
-      // );
+      socket.current?.addEventListener(
+        "close",
+        (close) => console.log({ close }),
+        { once: true }
+      );
+      socket.current?.addEventListener(
+        "error",
+        (error) => console.log({ error }),
+        { once: true }
+      );
     }
 
     return () => {
-      console.log("unmount");
-      if (socket?.current?.readyState !== WebSocket.OPEN) {
-        // socket?.current?.close();
-        // socket?.current?.removeEventListener("message", onMessage);
+      if (socket.current?.readyState !== WebSocket.OPEN) {
+        socket.current?.close();
+        socket.current?.removeEventListener("message", onMessage);
       }
     };
   }, [user, sendMessage, room, isReady]);
 
   const onMessage = (messageEvent) => {
-    console.log({ messageEvent });
     if (messageEvent.type === "message") {
       const message = JSON.parse(messageEvent.data);
-      console.log({ message });
       setMessages((messages) => [...messages, message]);
     }
   };
