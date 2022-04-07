@@ -80,7 +80,7 @@ export default function Room() {
 
     if (!!isReady && !socket.current) {
       console.log("socket.current is null");
-      socket.current = new WebSocket(`ws://${location.host}`, room);
+      socket.current = new WebSocket(`wss://${location.host}`, room);
       console.log({ socket: socket.current });
 
       socket?.current?.addEventListener("message", onMessage);
