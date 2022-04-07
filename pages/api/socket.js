@@ -10,6 +10,7 @@ const setUser = (ws, user) => {
 };
 
 const onConnection = (ws) => {
+  console.log("onConnection");
   ws.on("message", onMessage);
 };
 
