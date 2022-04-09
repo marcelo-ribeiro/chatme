@@ -1,45 +1,43 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import styles from "../../styles/Home.module.css";
 
-export const isBrowser = typeof window !== "undefined";
-// console.log({ isBrowser });
-// const socket = isBrowser
-//   ? new WebSocket(`ws://${location.host}`, sessionStorage.getItem("room"))
-//   : null;
-// console.log({ socket });
+// export const isBrowser = typeof window !== "undefined";
 
 export default function Room() {
   const router = useRouter();
   const { room } = router.query;
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<object[]>([]);
   const [message, setMessage] = useState("");
-  const [user, setUser] = useState();
-  const [isReady, setIsReady] = useState();
-  const socket = useRef();
-  const scrollContainer = useRef();
-  const inputMessage = useRef();
+  const [users, setUsers] = useState();
+  const [user, setUser] = useState<any>();
+  const [isReady, setIsReady] = useState(false);
+  const socket = useRef<WebSocket>();
+  const scrollContainer = useRef<HTMLDivElement>(null);
+  const inputMessage = useRef<HTMLInputElement>(null);
 
+  // Get username
   useEffect(() => {
-    let user;
-    if (sessionStorage["mychat:user"]) {
-      user = JSON.parse(sessionStorage["mychat:user"]);
+    let user: any;
+    const sessionUser = sessionStorage["mychat:user"];
+    if (sessionUser) {
+      user = JSON.parse(sessionUser);
     } else {
-      let username = prompt("Qual o seu apelido?");
-      username = username || "Anônimo";
-
+      const username = prompt("Qual o seu apelido?") || "Anônimo";
       user = { id: uuid(), username };
       sessionStorage["mychat:user"] = JSON.stringify(user);
     }
     setUser(user);
   }, []);
 
+  // Scrool to bottom on new messages
   useEffect(() => {
-    scrollContainer.current.scrollTop = scrollContainer.current.scrollHeight;
+    scrollContainer.current!.scrollTop = scrollContainer.current!.scrollHeight;
   }, [messages]);
 
+  // Fetch WebsocketServer
   useEffect(() => {
     if (!user) return;
     const controller = new AbortController();
@@ -60,27 +58,45 @@ export default function Room() {
     };
   }, [user]);
 
-  const sendMessage = useCallback((message, user) => {
-    const messageData = {
-      id: uuid(),
-      created: new Date(),
-      user,
-      message,
-    };
-    socket.current?.send(JSON.stringify(messageData));
-    setMessage("");
-  }, []);
+  // Send message
+  const sendMessage = useCallback(
+    (message: string) => {
+      let messageData: any = {
+        type: "message",
+        user,
+        message,
+      };
+      const messageDataString = JSON.stringify(messageData);
+      if (socket.current?.bufferedAmount === 0) {
+        socket.current?.send(messageDataString);
+      }
+      setMessage("");
+    },
+    [user]
+  );
 
+  // Create new user
+  const addUser = useCallback(() => {
+    const data = {
+      type: "newUser",
+      message: "Usuário conectado",
+      user,
+    };
+    if (socket.current?.bufferedAmount === 0) {
+      socket.current?.send(JSON.stringify(data));
+    }
+  }, [user]);
+
+  // Connect to WebsocketServer and listen for events
   useEffect(() => {
     if (!!isReady && !socket.current) {
-      socket.current = new WebSocket(`wss://${location.host}`, room);
+      socket.current = new WebSocket(
+        `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}`,
+        room
+      );
 
       socket.current?.addEventListener("message", onMessage);
-      socket.current?.addEventListener(
-        "open",
-        () => sendMessage("Usuário conectado", user),
-        { once: true }
-      );
+      socket.current?.addEventListener("open", addUser, { once: true });
       socket.current?.addEventListener(
         "close",
         (close) => console.log({ close }),
@@ -99,22 +115,30 @@ export default function Room() {
         socket.current?.removeEventListener("message", onMessage);
       }
     };
-  }, [user, sendMessage, room, isReady]);
+  }, [user, room, isReady, addUser]);
 
-  const onMessage = (messageEvent) => {
-    if (messageEvent.type === "message") {
-      const message = JSON.parse(messageEvent.data);
-      setMessages((messages) => [...messages, message]);
+  // Listen for messages received from WebsocketServer
+  const onMessage = (messageEvent: MessageEvent) => {
+    const message = JSON.parse(messageEvent.data);
+
+    switch (message.type) {
+      case "updateUsers":
+        setUsers(message.users);
+        break;
+      default:
+        setMessages((messages: any) => [...messages, message]);
     }
   };
 
-  const onSubmit = (event) => {
+  // Handle form Submit and send message to WebsocketServer
+  const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    inputMessage.current.focus();
-    sendMessage(message, user);
+    inputMessage.current!.focus();
+    sendMessage(message);
   };
 
-  const isAuthorMessage = (messageData) =>
+  // Check if is author of message
+  const isAuthorMessage = (messageData: any) =>
     user?.username === messageData.user.username;
 
   return (
@@ -129,7 +153,7 @@ export default function Room() {
 
       <main className={styles.main}>
         {!!user &&
-          messages.map((message) => (
+          messages?.map((message: any) => (
             <div
               className={`chat__message ${
                 isAuthorMessage(message)
