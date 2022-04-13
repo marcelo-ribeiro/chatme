@@ -6,6 +6,21 @@
   grid-template-rows: 3rem 1fr auto;
   height: 100%;
   overflow-y: auto;
+  background: #000;
+}
+
+@media screen and (min-width: 482px) {
+  .page {
+    max-width: 25rem;
+    height: 75%;
+    margin: auto;
+    border: solid var(--light-15);
+    border-width: 1px;
+    border-color: var(--light-15) var(--light-10) var(--light-15)
+      var(--light-10);
+    border-radius: 0.75rem;
+    box-shadow: #000 0 0 0 2px;
+  }
 }
 
 .container {
@@ -15,38 +30,41 @@
 .header {
   position: sticky;
   top: 0;
+  z-index: 10;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 3rem;
+  /* height: 3rem; */
   padding: 0.5rem 0;
   background: #0008;
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--light);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--light-10);
 }
 
 .header h1 {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   margin: 0;
   letter-spacing: -0.025em;
+  color: var(--light-70);
 }
 
 .main {
-  display: flex;
   display: grid;
-  align-content: flex-start;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  align-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.5rem 0.75rem;
+  padding-bottom: 2rem;
   width: 100%;
 }
 
 .footer {
   position: sticky;
   bottom: 0;
+  z-index: 10;
   display: flex;
   justify-content: center;
   align-items: center;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(20px);
   background: #0008;
-  /* border-top: 1px solid var(--light); */
+  border-top: 1px solid var(--light-10);
 }

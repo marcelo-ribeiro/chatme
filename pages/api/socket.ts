@@ -3,14 +3,11 @@ import { Duplex } from "stream";
 import { v4 as uuid } from "uuid";
 import WebSocket, { WebSocketServer } from "ws";
 
-interface ISocket extends Duplex {
-  server?: WebSocketServer;
-}
 type TUser = {};
-type TSocketProtocol = string;
+type TRoom = string;
+type TRooms = Map<TRoom, Map<WebSocket, TUser>>;
 
-let webSocketServer: WebSocketServer;
-const rooms: Map<TSocketProtocol, Map<WebSocket, TUser>> = new Map();
+let rooms: TRooms = new Map();
 
 const onMessage = ({ target: socket, data }: WebSocket.MessageEvent) => {
   const messageData = {
@@ -21,8 +18,7 @@ const onMessage = ({ target: socket, data }: WebSocket.MessageEvent) => {
 
   if (messageData.type === "newUser") {
     // Add or Create rooms including socket and user
-    rooms.get(socket.protocol)?.set(socket, messageData.user) ??
-      rooms.set(socket.protocol, new Map([[socket, messageData.user]]));
+    rooms.get(socket.protocol)?.set(socket, messageData.user);
 
     // Send updateUsers to all sockets in room
     const sockets = rooms.get(socket.protocol);
@@ -48,7 +44,6 @@ const onMessage = ({ target: socket, data }: WebSocket.MessageEvent) => {
 
 const onClose = ({ target: socket }: WebSocket.CloseEvent) => {
   socket.terminate();
-  console.log("Socket closed", socket);
   // Remove socket from roomSockets
   rooms.get(socket.protocol)?.delete(socket);
 };
@@ -64,32 +59,59 @@ const sendMessage = (socket: WebSocket, messageData: any, binary: boolean) => {
   }
 };
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const { server } = res.socket as ISocket;
+const createRoom = (): string => {
+  const room = uuid();
+  rooms.set(room, new Map());
+  return room;
+};
 
-  if (!!webSocketServer) {
-    console.log("Socket is already running");
-  } else {
-    console.log("Socket is initializing");
+const hasRoom = (rooms: TRooms, protocol: TRoom): boolean => {
+  return rooms.has(protocol);
+};
 
-    // Create WebSocket server
-    webSocketServer = new WebSocketServer({ noServer: true });
+export default (req: NextApiRequest, res: NextApiResponse) => {
+  const { server } = res.socket as any;
 
-    // Emit connection event
-    server?.on("upgrade", (req: any, socket: Duplex, head: any) => {
-      console.log("upgrade", req.url);
-      if (!req.url.includes("/_next/webpack-hmr")) {
-        webSocketServer.handleUpgrade(req, socket, head, (ws) => {
-          webSocketServer.emit("connection", ws, req);
-        });
-      }
+  if (req.method === "POST") {
+    const room = createRoom();
+    server.rooms = rooms;
+
+    res.status(200).json({
+      success: true,
+      room,
     });
+  } else if (req.method === "GET") {
+    const room = req.query.room as TRoom;
 
-    // WebSocketServer listeners
-    webSocketServer.addListener("connection", onConnection);
-    webSocketServer.addListener("error", console.log);
-    webSocketServer.addListener("close", console.log);
+    if (!hasRoom(server.rooms, room)) {
+      res.status(404).json({
+        success: false,
+        message: "Room not found.",
+      });
+    }
+
+    rooms = server.rooms;
+
+    if (!server?.wss) {
+      // Create WebSocket server
+      const wss = new WebSocketServer({ noServer: true });
+      server.wss = wss;
+
+      // Emit connection event
+      server?.on("upgrade", (req: any, socket: Duplex, head: any) => {
+        if (!req.url.includes("/_next/webpack-hmr")) {
+          wss.handleUpgrade(req, socket, head, (ws) => {
+            wss.emit("connection", ws, req);
+          });
+        }
+      });
+
+      // WebSocketServer listeners
+      wss.addListener("connection", onConnection);
+      wss.addListener("error", console.log);
+      wss.addListener("close", console.log);
+    }
+
+    res.end();
   }
-
-  res.end();
 };
