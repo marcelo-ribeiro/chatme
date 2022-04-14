@@ -143,7 +143,6 @@ export default function Room() {
 
     return () => {
       if (socket.current?.readyState !== WebSocket.OPEN) {
-        alert("unmount");
         socket.current?.close();
         socket.current?.removeEventListener("message", onMessage);
         socket.current = null;
