@@ -1,11 +1,41 @@
 import { GetServerSideProps } from "next";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { v4 as uuid } from "uuid";
+import { generateLightColorHsl } from "services/random-colors";
 import styles from "../../styles/Home.module.css";
 
-// export const isBrowser = typeof window !== "undefined";
+interface User {
+  id: number;
+  name: string;
+  color: string;
+}
+interface Message {
+  id: string;
+  created: Date;
+  message: string;
+  user: User;
+}
+
+const colors = [
+  "#FF0000",
+  "#FFFF00",
+  "#FF00FF",
+  "#00FF00",
+  "#00FFFF",
+  "#0000FF",
+];
+
+export const isBrowser = typeof window !== "undefined";
+
+// Get username
+let cachedUser: User, cachedUsername: string;
+if (isBrowser) {
+  const sessionUser = sessionStorage["mychat:user"];
+  if (sessionUser) {
+    cachedUser = JSON.parse(sessionUser);
+    cachedUsername = cachedUser.name;
+  } else cachedUsername = prompt("Qual o seu apelido?") || "Anônimo";
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   if (!context.params?.room) {
@@ -32,27 +62,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 export default function Room() {
   const router = useRouter();
   const { room } = router.query;
-  const [messages, setMessages] = useState<object[]>([]);
-  const [users, setUsers] = useState();
-  const [user, setUser] = useState<any>();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [users, setUsers] = useState<User[]>();
+  const [user, setUser] = useState<User | null>(cachedUser || null);
+  const [username, setUsername] = useState(cachedUsername);
   const [isReady, setIsReady] = useState(false);
   const socket = useRef<WebSocket | null>(null);
   const scrollContainer = useRef<HTMLDivElement | null>(null);
   const inputMessage = useRef<HTMLInputElement | null>(null);
-
-  // Get username
-  useEffect(() => {
-    let user: any;
-    const sessionUser = sessionStorage["mychat:user"];
-    if (sessionUser) {
-      user = JSON.parse(sessionUser);
-    } else {
-      const username = prompt("Qual o seu apelido?") || "Anônimo";
-      user = { id: uuid(), username };
-      sessionStorage["mychat:user"] = JSON.stringify(user);
-    }
-    setUser(user);
-  }, []);
 
   // Scrool to bottom on new messages
   useEffect(() => {
@@ -62,44 +79,12 @@ export default function Room() {
     });
   }, [messages]);
 
-  // Fetch WebsocketServer
-  // useEffect(() => {
-  //   if (!user || !room) return;
-  //   const controller = new AbortController();
-  //   (async () => {
-  //     try {
-  //       const response = await fetch(`/api/socket?room=${room}`, {
-  //         method: "GET",
-  //         signal: controller.signal,
-  //       });
-  //       console.log({ response });
-
-  //       if (!response.ok) {
-  //         const data = await response.json();
-  //         throw new Error(data.message);
-  //       }
-  //       setIsReady(true);
-  //     } catch (error: any) {
-  //       console.dir({ error });
-  //       alert(error.message);
-  //     }
-  //   })();
-  //   return () => {
-  //     controller?.abort();
-  //   };
-  // }, [user, room]);
-
   // Send message
   const sendMessage = useCallback(
     (message: string) => {
-      let messageData: any = {
-        type: "message",
-        user,
-        message,
-      };
-      const messageDataString = JSON.stringify(messageData);
+      let messageData: any = { user, message };
       if (socket.current?.bufferedAmount === 0) {
-        socket.current?.send(messageDataString);
+        socket.current?.send(JSON.stringify(messageData));
       }
     },
     [user]
@@ -109,17 +94,18 @@ export default function Room() {
   const addUser = useCallback(() => {
     const data = {
       type: "newUser",
-      message: "Usuário conectado",
-      user,
+      username: username,
+      color: generateLightColorHsl(),
     };
+
     if (socket.current?.bufferedAmount === 0) {
       socket.current?.send(JSON.stringify(data));
     }
-  }, [user]);
+  }, [username]);
 
   // Connect to WebsocketServer and listen for events
   useEffect(() => {
-    if (!!user && !socket.current) {
+    if (!!username && !socket.current) {
       socket.current = new WebSocket(
         `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}`,
         room
@@ -136,7 +122,16 @@ export default function Room() {
       );
       socket.current?.addEventListener(
         "close",
-        (close) => console.log({ close }),
+        (close) => {
+          console.log({ close });
+          // if (
+          //   confirm(
+          //     "Sua conexão com o servidor foi interrompida. Deseja tentar novamente?"
+          //   )
+          // )
+          //   window.location.reload();
+          // else router.replace("/");
+        },
         { once: true }
       );
       socket.current?.addEventListener(
@@ -148,28 +143,37 @@ export default function Room() {
 
     return () => {
       if (socket.current?.readyState !== WebSocket.OPEN) {
+        alert("unmount");
         socket.current?.close();
         socket.current?.removeEventListener("message", onMessage);
         socket.current = null;
       }
     };
-  }, [user, room, addUser]);
+  }, [username, room, addUser]);
 
   // Listen for messages received from WebsocketServer
   const onMessage = (messageEvent: MessageEvent) => {
-    const message = JSON.parse(messageEvent.data);
+    console.log({ messageEvent });
+    console.log(messageEvent.target === socket.current);
 
-    switch (message.type) {
+    const data = JSON.parse(messageEvent.data);
+
+    switch (data.type) {
       case "updateUsers":
-        setUsers(message.users);
+        setUsers(data.users);
         break;
-      // case "newUser":
-      //   setUser(message.user);
-      //   break;
+      case "newUser":
+        setUser(data.user);
+        sessionStorage["mychat:user"] = JSON.stringify(data.user);
+        break;
       case "message":
       default:
-        setMessages((messages: any) => [...messages, message]);
+        handleMessages(data);
     }
+  };
+
+  const handleMessages = (message: any) => {
+    setMessages((messages) => [...messages, message]);
   };
 
   // Handle form Submit and send message to WebsocketServer
@@ -181,22 +185,25 @@ export default function Room() {
   };
 
   // Check if is author of message
-  const isAuthorMessage = (messageData: any) => {
-    return user?.username === messageData.user.username;
+  const isAuthorMessage = (messageData: Message) => {
+    return user!.id === messageData.user.id;
+  };
+
+  const logout = () => {
+    sessionStorage.removeItem("mychat:user");
+    setUser(null);
+    setUsername("");
+    router.replace("/");
   };
 
   return (
     <div className={styles.page} ref={scrollContainer}>
       <header className={styles.header}>
-        <h1>
-          <Link href="/" replace>
-            <a>Darkchat</a>
-          </Link>
-        </h1>
+        <h1 onClick={logout}>Darkchat</h1>
       </header>
 
       <main className={styles.main}>
-        {messages?.map((message: any) => (
+        {messages?.map((message: Message) => (
           <div
             className={`chat__message ${
               isAuthorMessage(message)
@@ -206,7 +213,13 @@ export default function Room() {
             key={message.id}
           >
             <div>
-              <strong>{message.user.username}</strong>{" "}
+              <strong
+                style={{
+                  color: `hsl(${message.user.color} 60% 60%)`,
+                }}
+              >
+                {message.user.name}
+              </strong>{" "}
               <time>{new Date(message.created).toLocaleTimeString()}</time>
             </div>
             {message.message}

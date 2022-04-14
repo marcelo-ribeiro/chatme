@@ -3,42 +3,56 @@ import { Duplex } from "stream";
 import { v4 as uuid } from "uuid";
 import WebSocket, { WebSocketServer } from "ws";
 
-type TUser = {};
-type TRoom = string;
-type TRooms = Map<TRoom, Map<WebSocket, TUser>>;
+type RoomId = string;
+type Room = Map<WebSocket, TUser>;
+type TRooms = Map<RoomId, Room>;
+type TUser = {
+  id: string;
+  name: string;
+  color: string;
+};
+type MessageData = {
+  id: string;
+  type: string;
+  created: Date;
+  message: string;
+  user: TUser;
+};
 
 let rooms: TRooms = new Map();
 
 const onMessage = ({ target: socket, data }: WebSocket.MessageEvent) => {
-  const messageData = {
-    ...JSON.parse(data as any),
-    id: uuid(),
-    created: new Date(),
-  };
+  const messageData = JSON.parse(data as any);
+  const sockets = rooms.get(socket.protocol);
 
   if (messageData.type === "newUser") {
+    // Create user
+    const newUser: TUser = {
+      id: uuid(),
+      name: messageData.username,
+      color: messageData.color,
+    };
     // Add or Create rooms including socket and user
-    rooms.get(socket.protocol)?.set(socket, messageData.user);
-
+    sockets?.set(socket, newUser);
+    console.log({ sockets });
+    // Send newUser to owmer
+    sendMessage(socket, {
+      ...messageData,
+      user: newUser,
+    });
+    // Send newUser to all other users
+    broadcast(sockets!, {
+      message: "User joined",
+      user: newUser,
+    });
     // Send updateUsers to all sockets in room
-    const sockets = rooms.get(socket.protocol);
-    sockets!.forEach((user, socket) => {
-      sendMessage(socket, messageData, false);
-      sendMessage(
-        socket,
-        {
-          type: "updateUsers",
-          users: Array.from(sockets!.values()),
-        },
-        false
-      );
+    broadcast(sockets!, {
+      type: "updateUsers",
+      users: Array.from(sockets!.values()),
     });
   } else {
     // Send message to all sockets in room
-    const sockets = rooms.get(socket.protocol);
-    sockets!.forEach((user, socket) => {
-      sendMessage(socket, messageData, false);
-    });
+    broadcast(sockets!, messageData);
   }
 };
 
@@ -53,10 +67,30 @@ const onConnection = (socket: WebSocket) => {
   socket.addEventListener("close", onClose, { once: true });
 };
 
-const sendMessage = (socket: WebSocket, messageData: any, binary: boolean) => {
+const sendMessage = (
+  socket: WebSocket,
+  messageData: any,
+  binary: boolean = false
+) => {
+  messageData = {
+    id: uuid(),
+    type: "message",
+    created: new Date(),
+    ...messageData,
+  };
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(messageData), { binary });
   }
+};
+
+const broadcast = (
+  sockets: Room,
+  messageData: any,
+  binary: boolean = false
+) => {
+  sockets.forEach((user, socket) => {
+    sendMessage(socket, messageData, binary);
+  });
 };
 
 const createRoom = (): string => {
@@ -65,12 +99,13 @@ const createRoom = (): string => {
   return room;
 };
 
-const hasRoom = (rooms: TRooms, protocol: TRoom): boolean => {
+const hasRoom = (rooms: TRooms, protocol: RoomId): boolean => {
   return rooms.has(protocol);
 };
 
 export default (req: NextApiRequest, res: NextApiResponse) => {
   const { server } = res.socket as any;
+  console.log({ SERVER: server });
 
   if (req.method === "POST") {
     const room = createRoom();
@@ -81,7 +116,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
       room,
     });
   } else if (req.method === "GET") {
-    const room = req.query.room as TRoom;
+    const room = req.query.room as RoomId;
 
     if (!hasRoom(server.rooms, room)) {
       res.status(404).json({

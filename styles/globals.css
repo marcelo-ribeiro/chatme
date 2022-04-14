@@ -1,4 +1,4 @@
-:root {
+/* :root {
   --font-family: "Inter", sans-serif;
   --primary: hsl(345, 85%, 75%);
   --light-10: hsla(0, 0%, 0%, 0.1);
@@ -10,9 +10,26 @@
   --background: hsl(0, 0%, 100%);
   --main-background: hsl(0, 0%, 90%);
   --text-color: var(--light-80);
+} */
+:root {
+  --primary: hsl(345, 85%, 30%);
+  --light-05: hsla(0, 0%, 100%, 0.05);
+  --light-10: hsla(0, 0%, 100%, 0.1);
+  --light-15: hsla(0, 0%, 100%, 0.15);
+  --light-20: hsla(0, 0%, 100%, 0.2);
+  --light-70: hsla(0, 0%, 100%, 0.7);
+  --light-75: hsla(0, 0%, 100%, 0.75);
+  --light-80: hsla(0, 0%, 100%, 0.8);
+  --light-85: hsla(0, 0%, 100%, 0.85);
+  --light-90: hsla(0, 0%, 100%, 0.9);
+  --light-95: hsla(0, 0%, 100%, 0.95);
+  --medium: hsla(0, 0%, 100%, 0.5);
+  --background: hsl(0, 0%, 7.5%);
+  --main-background: hsl(0, 0%, 5%);
+  --text-color: var(--light-80);
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --primary: hsl(345, 85%, 30%);
     --light-05: hsla(0, 0%, 100%, 0.05);
@@ -30,7 +47,7 @@
     --main-background: hsl(0, 0%, 5%);
     --text-color: var(--light-80);
   }
-}
+} */
 
 * {
   box-sizing: border-box;
@@ -111,7 +128,7 @@ form {
 .input--text {
   width: 100%;
   height: 3rem;
-  padding: 0.25rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   appearance: none;
   background: none;
   border: 1px solid var(--light-20);
@@ -138,23 +155,22 @@ form {
 }
 .chat__message {
   max-width: 80%;
-  padding: 0.5rem 0.75rem;
-  background: var(--light-20);
-  border-radius: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--light-10);
+  border: 1px solid var(--light-05);
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   animation-name: chat-bubble;
-  animation-duration: 0.5s;
+  animation-duration: 0.3s;
   animation-timing-function: ease-out;
   will-change: opacity;
 }
 .chat__message--me {
   justify-self: end;
-  background: var(--primary);
-  /* border-bottom-right-radius: 0; */
+  background: var(--light-15);
 }
 .chat__message--other {
   justify-self: start;
-  /* border-top-left-radius: 0; */
 }
 .chat__message time {
   font-size: 0.675rem;
