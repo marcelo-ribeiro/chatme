@@ -45,7 +45,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const response = await fetch(
-    `http://localhost:3000/api/socket?room=${context.params.room}`
+    `${location.origin}/api/socket?room=${context.params.room}`
   );
 
   if (!response.ok) {
