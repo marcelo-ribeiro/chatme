@@ -18,7 +18,7 @@ export default function Home() {
         if (!response.ok || !success) {
           throw new Error("Não foi possível criar a sala");
         }
-        router.push(`/room/${room}`);
+        router.push("/room/[room]", `/room/${room}`);
       } catch (error) {
         console.log("Error: ", error);
       }
