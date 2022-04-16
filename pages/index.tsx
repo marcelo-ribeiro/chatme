@@ -10,11 +10,18 @@ export default function Home() {
 
   const createRoom = () => {
     (async () => {
-      const response = await fetch("/api/socket", {
-        method: "POST",
-      });
-      const { room } = await response.json();
-      router.push(`/room/${room}`);
+      try {
+        const response = await fetch("/api/socket", {
+          method: "POST",
+        });
+        const { room, success } = await response.json();
+        if (!response.ok || !success) {
+          throw new Error("Não foi possível criar a sala");
+        }
+        router.push(`/room/${room}`);
+      } catch (error) {
+        console.log("Error: ", error);
+      }
     })();
   };
 

@@ -38,17 +38,17 @@ if (isBrowser) {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  if (!context.params?.room) {
-    return {
-      notFound: true,
-    };
-  }
-
-  const response = await fetch(
-    `${location.origin}/api/socket?room=${context.params.room}`
-  );
-
-  if (!response.ok) {
+  try {
+    if (!context.params?.room) {
+      throw new Error("roomId is required");
+    }
+    const response = await fetch(
+      `${location.origin}/api/socket?room=${context.params.room}`
+    );
+    if (!response.ok) {
+      throw new Error("Não foi possível criar a sala");
+    }
+  } catch {
     return {
       notFound: true,
     };
