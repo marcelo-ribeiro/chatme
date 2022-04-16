@@ -27,5 +27,8 @@
   "main": "next.config.js",
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "cacheDirectories": [
+    ".next/cache"
+  ]
 }
