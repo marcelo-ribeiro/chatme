@@ -38,22 +38,16 @@ if (isBrowser) {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { room } = context.params!;
   try {
-    if (!context.params?.room) {
-      throw new Error("roomId is required");
-    }
-    const response = await fetch(
-      `${location.origin}/api/socket?room=${context.params.room}`
-    );
-    if (!response.ok) {
-      throw new Error("Não foi possível criar a sala");
-    }
+    if (!room) throw new Error("roomId is required");
+    const response = await fetch(`${location.origin}/api/socket?room=${room}`);
+    if (!response.ok) throw new Error("Não foi possível criar a sala");
   } catch {
     return {
       notFound: true,
     };
   }
-
   return {
     props: {}, // will be passed to the page component as props
   };
