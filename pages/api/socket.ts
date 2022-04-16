@@ -105,10 +105,8 @@ const hasRoom = (rooms: TRooms, protocol: RoomId): boolean => {
 
 export default (req: NextApiRequest, res: NextApiResponse) => {
   const { server } = res.socket as any;
-  console.log({ SERVER: server });
-
   if (req.method === "POST") {
-    console.log("POST");
+    console.log("POST", server);
 
     const room = createRoom();
     server.rooms = rooms;
@@ -118,6 +116,8 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
       room,
     });
   } else if (req.method === "GET") {
+    console.log("GET", server);
+
     const room = req.query.room as RoomId;
 
     if (!hasRoom(server.rooms, room)) {
