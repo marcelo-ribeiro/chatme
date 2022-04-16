@@ -88,7 +88,7 @@ const broadcast = (
   messageData: any,
   binary: boolean = false
 ) => {
-  sockets.forEach((user, socket) => {
+  sockets?.forEach((user, socket) => {
     sendMessage(socket, messageData, binary);
   });
 };
@@ -100,7 +100,7 @@ const createRoom = (): string => {
 };
 
 const hasRoom = (rooms: TRooms, protocol: RoomId): boolean => {
-  return rooms.has(protocol);
+  return rooms?.has(protocol);
 };
 
 export default (req: NextApiRequest, res: NextApiResponse) => {
@@ -108,6 +108,8 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
   console.log({ SERVER: server });
 
   if (req.method === "POST") {
+    console.log("POST");
+
     const room = createRoom();
     server.rooms = rooms;
 

@@ -21,19 +21,12 @@ export default function App({ Component, pageProps }: AppProps) {
             href="/icons/apple-touch-icon.png"
           />
           <link rel="manifest" href="/manifest.json" />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
-            rel="stylesheet"
-          /> */}
+        */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="crossorigin"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
-          rel="stylesheet"
         />
       </Head>
       <Component {...pageProps} />

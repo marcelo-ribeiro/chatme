@@ -73,9 +73,11 @@ export default function Room() {
 
   // Scrool to bottom on new messages
   useEffect(() => {
-    scrollContainer.current?.scrollTo({
-      top: scrollContainer.current!.scrollHeight,
-      behavior: "smooth",
+    window?.requestAnimationFrame(() => {
+      scrollContainer.current?.scroll({
+        top: scrollContainer.current!.scrollHeight,
+        behavior: "smooth",
+      });
     });
   }, [messages]);
 
@@ -143,6 +145,7 @@ export default function Room() {
 
     return () => {
       if (socket.current?.readyState !== WebSocket.OPEN) {
+        console.log("unmount");
         socket.current?.close();
         socket.current?.removeEventListener("message", onMessage);
         socket.current = null;
@@ -185,14 +188,16 @@ export default function Room() {
 
   // Check if is author of message
   const isAuthorMessage = (messageData: Message) => {
-    return user!.id === messageData.user.id;
+    return user?.id === messageData.user.id;
   };
 
   const logout = () => {
-    sessionStorage.removeItem("mychat:user");
-    setUser(null);
-    setUsername("");
+    // sessionStorage.removeItem("mychat:user");
+    // setUser(null);
+    // setUsername("");
     router.replace("/");
+    socket.current?.close();
+    socket.current?.removeEventListener("message", onMessage);
   };
 
   return (
@@ -214,7 +219,7 @@ export default function Room() {
             <div>
               <strong
                 style={{
-                  color: `hsl(${message.user.color} 60% 60%)`,
+                  color: `hsl(${message.user.color} 50% 50%)`,
                 }}
               >
                 {message.user.name}
