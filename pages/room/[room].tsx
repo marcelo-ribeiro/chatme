@@ -16,15 +16,6 @@ interface Message {
   user: User;
 }
 
-const colors = [
-  "#FF0000",
-  "#FFFF00",
-  "#FF00FF",
-  "#00FF00",
-  "#00FFFF",
-  "#0000FF",
-];
-
 export const isBrowser = typeof window !== "undefined";
 
 // Get username
@@ -41,7 +32,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { room } = context.params!;
   try {
     if (!room) throw new Error("roomId is required");
-    const response = await fetch(`${location.origin}/api/socket?room=${room}`);
+    const response = await fetch(
+      `https://tchatme.herokuapp.com/api/socket?room=${room}`
+    );
     if (!response.ok) throw new Error("Não foi possível criar a sala");
   } catch {
     return {
