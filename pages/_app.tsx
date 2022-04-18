@@ -21,8 +21,8 @@ export default function App({ Component, pageProps }: AppProps) {
           sizes="180x180"
           href="/apple-touch-icon.png"
         />
-        {/* <link rel="manifest" href="/manifest.json" /> */}
-
+        <link rel="manifest" href="/manifest.json" />
+        {/* Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

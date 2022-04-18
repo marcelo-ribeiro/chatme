@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-
 export default function Home() {
   const router = useRouter();
-
   const createRoom = () => {
     (async () => {
       try {
@@ -19,7 +17,6 @@ export default function Home() {
       }
     })();
   };
-
   return (
     <div className="page">
       <header className="header">
@@ -29,7 +26,6 @@ export default function Home() {
           </Link>
         </h1>
       </header>
-
       <main className="main">
         <div className="main__container" style={{ alignContent: "center" }}>
           <button className="button button--room" onClick={createRoom}>
