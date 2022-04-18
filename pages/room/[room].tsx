@@ -200,7 +200,7 @@ export default function Room({ room }: { room: string }) {
       <div className="pages__container">
         <div className="page" ref={scrollContainer}>
           <header className="header">
-            <h1 onClick={logout}>Darkchat</h1>
+            <h1 onClick={logout}>talk2you</h1>
           </header>
 
           <main className="main">

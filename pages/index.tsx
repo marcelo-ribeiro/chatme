@@ -25,7 +25,7 @@ export default function Home() {
       <header className="header">
         <h1>
           <Link href="/">
-            <a>Darkchat</a>
+            <a>talk2you</a>
           </Link>
         </h1>
       </header>
