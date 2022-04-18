@@ -2,7 +2,6 @@ import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { generateLightColorHsl } from "services/random-colors";
-import styles from "../../styles/Home.module.css";
 
 interface User {
   id: number;
@@ -15,6 +14,11 @@ interface Message {
   message: string;
   user: User;
 }
+
+const baseUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://tchatme.herokuapp.com";
 
 export const isBrowser = typeof window !== "undefined";
 
@@ -32,9 +36,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { room } = context.params!;
   try {
     if (!room) throw new Error("roomId is required");
-    const response = await fetch(
-      `https://tchatme.herokuapp.com/api/socket?room=${room}`
-    );
+    const response = await fetch(`${baseUrl}/api/socket?room=${room}`);
     if (!response.ok) throw new Error("Não foi possível criar a sala");
   } catch {
     return {
@@ -42,13 +44,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
   return {
-    props: {}, // will be passed to the page component as props
+    props: {
+      room,
+    },
   };
 };
 
-export default function Room() {
+export default function Room({ room }: { room: string }) {
   const router = useRouter();
-  const { room } = router.query;
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<User[]>();
   const [user, setUser] = useState<User | null>(cachedUser || null);
@@ -72,7 +75,10 @@ export default function Room() {
   const sendMessage = useCallback(
     (message: string) => {
       let messageData: any = { user, message };
-      if (socket.current?.bufferedAmount === 0) {
+      if (
+        socket.current?.readyState === WebSocket.OPEN &&
+        socket.current?.bufferedAmount === 0
+      ) {
         socket.current?.send(JSON.stringify(messageData));
       }
     },
@@ -95,6 +101,8 @@ export default function Room() {
   // Connect to WebsocketServer and listen for events
   useEffect(() => {
     if (!!username && !socket.current) {
+      console.log("Connecting to websocket...");
+
       socket.current = new WebSocket(
         `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}`,
         room
@@ -131,14 +139,14 @@ export default function Room() {
     }
 
     return () => {
-      if (socket.current?.readyState !== WebSocket.OPEN) {
-        console.log("unmount");
-        socket.current?.close();
-        socket.current?.removeEventListener("message", onMessage);
-        socket.current = null;
-      }
+      console.log("unmount");
+      // if (socket.current?.readyState !== WebSocket.OPEN) {
+      // socket.current?.close();
+      // socket.current?.removeEventListener("message", onMessage);
+      // socket.current = null;
+      // }
     };
-  }, [username, room, addUser]);
+  }, [username, addUser]);
 
   // Listen for messages received from WebsocketServer
   const onMessage = (messageEvent: MessageEvent) => {
@@ -188,68 +196,92 @@ export default function Room() {
   };
 
   return (
-    <div className={styles.page} ref={scrollContainer}>
-      <header className={styles.header}>
-        <h1 onClick={logout}>Darkchat</h1>
-      </header>
+    <div className="pages">
+      <div className="pages__container">
+        <div className="page" ref={scrollContainer}>
+          <header className="header">
+            <h1 onClick={logout}>Darkchat</h1>
+          </header>
 
-      <main className={styles.main}>
-        {messages?.map((message: Message) => (
-          <div
-            className={`chat__message ${
-              isAuthorMessage(message)
-                ? "chat__message--me"
-                : "chat__message--other"
-            }`}
-            key={message.id}
-          >
-            <div>
-              <strong
-                style={{
-                  color: `hsl(${message.user.color} 50% 50%)`,
-                }}
-              >
-                {message.user.name}
-              </strong>{" "}
-              <time>{new Date(message.created).toLocaleTimeString()}</time>
+          <main className="main">
+            <div className="main__container container">
+              {messages?.map((message: Message) => (
+                <div
+                  className={`chat__message ${
+                    isAuthorMessage(message)
+                      ? "chat__message--me"
+                      : "chat__message--other"
+                  }`}
+                  key={message.id}
+                >
+                  <div>
+                    <strong
+                      style={{
+                        color: `hsl(${message.user.color} 50% 50%)`,
+                      }}
+                    >
+                      {message.user.name}
+                    </strong>{" "}
+                    <time>
+                      {new Date(message.created).toLocaleTimeString()}
+                    </time>
+                  </div>
+                  {message.message}
+                </div>
+              ))}
             </div>
-            {message.message}
-          </div>
-        ))}
-      </main>
+          </main>
 
-      {isReady && (
-        <footer className={styles.footer}>
-          <form onSubmit={onSubmit}>
-            <input
-              ref={inputMessage}
-              type="text"
-              className="input--text chat__input"
-              name={`message-${room}`}
-              required
-              placeholder="Digite sua mensagem"
-              autoFocus
-            />
-            <button className="button button--icon chat__button" type="submit">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="icon icon-send"
-                viewBox="0 0 512 512"
-              >
-                <title>Send</title>
-                <path
-                  d="M470.3 271.15L43.16 447.31a7.83 7.83 0 01-11.16-7V327a8 8 0 016.51-7.86l247.62-47c17.36-3.29 17.36-28.15 0-31.44l-247.63-47a8 8 0 01-6.5-7.85V72.59c0-5.74 5.88-10.26 11.16-8L470.3 241.76a16 16 0 010 29.39z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="32"
-                />
-              </svg>
-            </button>
-          </form>
-        </footer>
-      )}
+          {isReady && (
+            <footer className="footer">
+              <div className="footer__container container">
+                <form onSubmit={onSubmit}>
+                  <input
+                    ref={inputMessage}
+                    type="text"
+                    className="input--text chat__input"
+                    name={`message-${room}`}
+                    required
+                    placeholder="Digite sua mensagem"
+                    autoFocus
+                  />
+                  <button
+                    className="button button--icon chat__button"
+                    type="submit"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="icon icon-send"
+                      viewBox="0 0 512 512"
+                    >
+                      <title>Send</title>
+                      <path
+                        d="M470.3 271.15L43.16 447.31a7.83 7.83 0 01-11.16-7V327a8 8 0 016.51-7.86l247.62-47c17.36-3.29 17.36-28.15 0-31.44l-247.63-47a8 8 0 01-6.5-7.85V72.59c0-5.74 5.88-10.26 11.16-8L470.3 241.76a16 16 0 010 29.39z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="32"
+                      />
+                    </svg>
+                  </button>
+                </form>
+              </div>
+            </footer>
+          )}
+        </div>
+
+        <div className="page drawer">
+          <header className="header">
+            <h1 onClick={logout}>Usuários</h1>
+          </header>
+          <div>
+            {users?.map((user) => (
+              <div className="item">{user.name}</div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

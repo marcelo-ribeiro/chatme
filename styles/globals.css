@@ -18,6 +18,10 @@
   --light-10: hsla(0, 0%, 100%, 0.1);
   --light-15: hsla(0, 0%, 100%, 0.15);
   --light-20: hsla(0, 0%, 100%, 0.2);
+  --light-30: hsla(0, 0%, 100%, 0.3);
+  --light-40: hsla(0, 0%, 100%, 0.4);
+  --light-50: hsla(0, 0%, 100%, 0.5);
+  --light-60: hsla(0, 0%, 100%, 0.6);
   --light-70: hsla(0, 0%, 100%, 0.7);
   --light-75: hsla(0, 0%, 100%, 0.75);
   --light-80: hsla(0, 0%, 100%, 0.8);
@@ -122,7 +126,6 @@ form {
   gap: 0.75rem;
   align-items: center;
   width: 100%;
-  /* padding: 0 0.75rem; */
 }
 
 /* INPUT */
@@ -145,14 +148,20 @@ form {
   height: 1.5rem;
 }
 
+.container {
+  width: 100%;
+  max-width: 40rem;
+  padding: 0 0.75rem;
+}
+
 /* CHAT */
 @keyframes chat-bubble {
   0% {
-    opacity: 0;
+    /* opacity: 0; */
     transform: scale(0);
   }
   100% {
-    opacity: 1;
+    /* opacity: 1; */
     transform: scale(1);
   }
 }
@@ -185,6 +194,7 @@ form {
 }
 .chat__input {
   border: none;
+  padding-left: 1.25rem;
 }
 .chat__button {
   background: none;
@@ -199,4 +209,37 @@ form {
 .button--room {
   font-size: 1.125rem;
   justify-self: center;
+}
+
+.pages {
+  position: fixed;
+  display: flex;
+  width: 100vw;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+.pages__container {
+  display: flex;
+  flex-wrap: nowrap;
+}
+.pages .page {
+  position: sticky;
+  width: 100vw;
+  scroll-snap-align: start;
+}
+
+.page.drawer {
+  /* width: 100%; */
+  max-width: 25rem;
+  background: #2228;
+  backdrop-filter: blur(10px);
+  border-left: 1px solid var(--light-15);
+}
+
+.item {
+  border: solid #222;
+  border-width: 1px 0;
+  padding: 0.75rem 1rem;
+  margin-top: -1px;
 }

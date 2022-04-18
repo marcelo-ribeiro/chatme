@@ -1,9 +1,5 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { v4 as uuid } from "uuid";
-import styles from "../styles/Home.module.css";
-
-const roomId = uuid();
 
 export default function Home() {
   const router = useRouter();
@@ -15,9 +11,8 @@ export default function Home() {
           method: "POST",
         });
         const { room, success } = await response.json();
-        if (!response.ok || !success) {
+        if (!response.ok || !success)
           throw new Error("Não foi possível criar a sala");
-        }
         router.push("/room/[room]", `/room/${room}`);
       } catch (error) {
         console.log("Error: ", error);
@@ -26,19 +21,21 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
+    <div className="page">
+      <header className="header">
         <h1>
           <Link href="/">
-            <a>tchat</a>
+            <a>Darkchat</a>
           </Link>
         </h1>
       </header>
 
-      <main className={styles.main} style={{ alignContent: "center" }}>
-        <button className="button button--room" onClick={createRoom}>
-          Criar nova sala
-        </button>
+      <main className="main">
+        <div className="main__container" style={{ alignContent: "center" }}>
+          <button className="button button--room" onClick={createRoom}>
+            Criar nova sala
+          </button>
+        </div>
       </main>
     </div>
   );

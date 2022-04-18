@@ -34,7 +34,6 @@ const onMessage = ({ target: socket, data }: WebSocket.MessageEvent) => {
     };
     // Add or Create rooms including socket and user
     sockets?.set(socket, newUser);
-    console.log({ sockets });
     // Send newUser to owmer
     sendMessage(socket, {
       ...messageData,
@@ -57,9 +56,24 @@ const onMessage = ({ target: socket, data }: WebSocket.MessageEvent) => {
 };
 
 const onClose = ({ target: socket }: WebSocket.CloseEvent) => {
-  socket.terminate();
-  // Remove socket from roomSockets
-  rooms.get(socket.protocol)?.delete(socket);
+  // socket.terminate();
+  // Remove socket from rooms
+  const room = rooms.get(socket.protocol);
+  if (room) {
+    room.delete(socket);
+    // // Remove room if empty
+    // if (room.size === 0) rooms.delete(socket.protocol);
+    // // Send updateUsers to all sockets in room
+    // else
+    //   broadcast(room, {
+    //     type: "updateUsers",
+    //     users: Array.from(room.values()),
+    //   });
+  }
+
+  console.warn("Socket closed");
+  console.log(socket);
+  console.warn("Rooms", rooms);
 };
 
 const onConnection = (socket: WebSocket) => {
@@ -105,6 +119,7 @@ const hasRoom = (rooms: TRooms, protocol: RoomId): boolean => {
 
 export default (req: NextApiRequest, res: NextApiResponse) => {
   const { server } = res.socket as any;
+
   if (req.method === "POST") {
     console.log("POST", server);
 
@@ -146,7 +161,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
       // WebSocketServer listeners
       wss.addListener("connection", onConnection);
       wss.addListener("error", console.log);
-      wss.addListener("close", console.log);
+      wss.addListener("close", () => console.log("WebSocketServer closed"));
     }
 
     res.end();
