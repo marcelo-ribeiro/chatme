@@ -190,7 +190,7 @@ export default function Room({ room }: { room: string }) {
     // sessionStorage.removeItem("mychat:user");
     // setUser(null);
     // setUsername("");
-    router.replace("/");
+    router.back();
     socket.current?.close();
     socket.current?.removeEventListener("message", onMessage);
   };
