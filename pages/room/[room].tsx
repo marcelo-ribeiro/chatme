@@ -18,7 +18,7 @@ interface Message {
 const baseUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://tchatme.herokuapp.com";
+    : "https://talk2you.herokuapp.com";
 
 export const isBrowser = typeof window !== "undefined";
 
