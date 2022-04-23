@@ -108,9 +108,9 @@ const broadcast = (
 };
 
 const createRoom = (): string => {
-  const room = uuid();
-  rooms.set(room, new Map());
-  return room;
+  const roomId = uuid();
+  rooms.set(roomId, new Map());
+  return roomId;
 };
 
 const hasRoom = (rooms: TRooms, protocol: RoomId): boolean => {
@@ -123,7 +123,9 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "POST") {
     console.log("POST", server);
 
+    console.log("Rooms", rooms);
     const room = createRoom();
+
     server.rooms = rooms;
 
     res.status(200).json({
