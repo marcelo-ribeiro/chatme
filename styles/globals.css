@@ -184,18 +184,16 @@ form {
 .chat__message--other {
   justify-self: start;
   background: var(--light-10);
-  /* border: 1px solid var(--light-15); */
   transform-origin: bottom left;
 }
 .chat__message div {
   display: flex;
-  align-items: baseline;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.75rem;
 }
 .chat__message time {
   font-size: 0.675em;
-  color: var(--medium);
-  margin-left: 0.5rem;
+  color: var(--light-40);
 }
 .chat__input {
   border: none;
