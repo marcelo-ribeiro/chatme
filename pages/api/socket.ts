@@ -107,9 +107,14 @@ const broadcast = (
   });
 };
 
-const createRoom = (): string => {
+const createRoom = (server: any): string => {
   const roomId = uuid();
-  rooms.set(roomId, new Map());
+  // rooms.set(roomId, new Map());
+
+  if (!server.rooms) server.rooms = new Map();
+  server.rooms.set(roomId, new Map());
+  rooms = server.rooms;
+
   return roomId;
 };
 
@@ -121,20 +126,13 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
   const { server } = res.socket as any;
 
   if (req.method === "POST") {
-    console.log("POST", server);
-
-    console.log("Rooms", rooms);
-    const room = createRoom();
-
-    server.rooms = rooms;
+    const room = createRoom(server);
 
     res.status(200).json({
       success: true,
       room,
     });
   } else if (req.method === "GET") {
-    console.log("GET", server);
-
     const room = req.query.room as RoomId;
 
     if (!hasRoom(server.rooms, room)) {
