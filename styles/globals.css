@@ -156,25 +156,25 @@ form {
 
 /* CHAT */
 @keyframes chat-bubble {
-  0% {
-    /* opacity: 0; */
+  from {
     transform: scale(0);
   }
-  100% {
-    /* opacity: 1; */
-    transform: scale(1);
+  to {
+    transform: none;
   }
 }
 .chat__message {
   max-width: 80%;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.75rem;
   background: none;
   border-radius: 0.5rem;
   font-size: 0.875rem;
   animation-name: chat-bubble;
-  animation-duration: 0.25s;
-  animation-timing-function: cubic-bezier(0.25, 0.25, 0, 1.25);
-  will-change: transform, opacity;
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.25, 0.25, 0, 1.5);
+  animation-delay: 0.1s;
+  animation-fill-mode: backwards;
+  will-change: transform;
 }
 .chat__message--me {
   justify-self: end;
@@ -187,10 +187,15 @@ form {
   /* border: 1px solid var(--light-15); */
   transform-origin: bottom left;
 }
+.chat__message div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
 .chat__message time {
-  font-size: 0.675rem;
+  font-size: 0.675em;
   color: var(--medium);
-  margin-left: 0.25rem;
+  margin-left: 0.5rem;
 }
 .chat__input {
   border: none;
